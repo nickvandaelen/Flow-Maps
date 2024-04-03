@@ -101,8 +101,8 @@ plt.show()
 
 # Convert data to dataframe
 sequence_df = pd.DataFrame(sequence_matrix, index=sorted_cities, columns=sorted_cities)
-if not(os.path.exists(r"algorithm_repository/Flow-Maps/data.csv")):
-    sequence_df.to_csv(r"algorithm_repository/Flow-Maps/data.csv")
+if not(os.path.exists(r"algorithm_repository/Flow-Maps/data_more.csv")):
+    sequence_df.to_csv(r"algorithm_repository/Flow-Maps/data_more.csv")
 
 fig, axes = plt.subplots(1, 1, figsize=(15, 8))
 im = sns.heatmap(np.triu(sequence_matrix), cmap='viridis', xticklabels=sorted_cities, mask=mask,
