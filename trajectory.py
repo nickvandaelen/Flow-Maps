@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 from functools import reduce
 from copy import deepcopy
+import os
+print(os.getcwd())
 
 getDictKeys = lambda dict_: list(dict_.keys())
 getDictValues = lambda dict_: list(dict_.values())
@@ -195,4 +197,4 @@ class Trajectory:
 
 # Get trajectories
 t = Trajectory(r"algorithm_repository\Flow-Maps\trajectories.txt")
-print(t.countTrajectories(relative=False))
+print(t.countTrajectories(relative=True))
