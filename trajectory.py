@@ -4,12 +4,83 @@ import pandas as pd
 from functools import reduce
 from copy import deepcopy
 import os
-print(os.getcwd())
+import json
 
 getDictKeys = lambda dict_: list(dict_.keys())
 getDictValues = lambda dict_: list(dict_.values())
 getDictItems = lambda dict_: list(dict_.items())
 euclDist = lambda l1, l2: sum([(l1[i] - l2[i])**2 for i in range(len(l1))])**0.5
+
+def write_to_json(data, filename):
+    """
+    Write a dictionary to a JSON file.
+    
+    Args:
+        data: Dictionary to be written to the file.
+        filename: Name of the JSON file.
+    """
+    with open(filename, 'w') as json_file:
+        json.dump(data, json_file, indent=4)
+
+def read_from_json(filename):
+    """
+    Read a JSON file and return its content as a dictionary.
+    
+    Args:
+        filename: Name of the JSON file.
+        
+    Returns:
+        Dictionary containing the content of the JSON file.
+    """
+    with open(filename, 'r') as json_file:
+        data = json.load(json_file)
+    return data
+
+
+#### Quick Sort Function ####
+# Function to find the partition position
+def partition(array, low, high):
+
+	# choose the rightmost element as pivot
+	pivot = array[high]
+
+	# pointer for greater element
+	i = low - 1
+
+	# traverse through all elements
+	# compare each element with pivot
+	for j in range(low, high):
+		if array[j][1] <= pivot[1]:
+
+			# If element smaller than pivot is found
+			# swap it with the greater element pointed by i
+			i = i + 1
+
+			# Swapping element at i with element at j
+			(array[i], array[j]) = (array[j], array[i])
+
+	# Swap the pivot element with the greater element specified by i
+	(array[i + 1], array[high]) = (array[high], array[i + 1])
+
+	# Return the position from where partition is done
+	return i + 1
+
+# function to perform quicksort
+
+
+def quickSort(array, low, high):
+	if low < high:
+
+		# Find pivot element such that
+		# element smaller than pivot are on the left
+		# element greater than pivot are on the right
+		pi = partition(array, low, high)
+
+		# Recursive call on the left of pivot
+		quickSort(array, low, pi - 1)
+
+		# Recursive call on the right of pivot
+		quickSort(array, pi + 1, high)
 
 class PointError(Exception):
     def __init__(self, message):
@@ -168,6 +239,27 @@ class Trajectory:
             filtered_trajectories.extend(self.filterOnLength(length))
         return filtered_trajectories
     
+    def filterOnStartAndEndPoints(self, startPoints, endPoints):
+        """Filter the trajectories on given start and end nodes and return trajectories having these nodes as start or end points."""
+
+        # Raise errors if inputs are not correct
+        for startPoint, endPoint in zip(startPoints, endPoints):
+            if startPoint not in self.unique_points: # Start point not in points
+                raise PointError(f"Point {startPoint} not found!")
+            if endPoint not in self.unique_points: # End point not in points
+                raise PointError(f"Point {endPoint} not found!")
+            if startPoint in endPoints: # Start point is in end points (illegal)
+                raise PointError(f"Start point {startPoint} cannot be in end points!")
+            if endPoint in startPoints: # End point is in start points (illegal)
+                raise PointError(f"End point {endPoint} cannot be in start points!")
+            
+        # Filter trajectories based on start & end points
+        filtered_trajectories = []
+        for trajectory in self.trajectories:
+            if (trajectory[0] in startPoints) or (trajectory[-1] in endPoints):
+                filtered_trajectories.append(trajectory)
+        return filtered_trajectories
+    
     def countTrajectories(self, reverse=True, relative=False):
         """Returns a dictionary containing the count of each single trajectory in the trajectories."""
         # Initialize an empty dictionary to store counts
@@ -194,7 +286,25 @@ class Trajectory:
                 element_counts[key] = element_counts[key] / total
         
         return element_counts
+    
+    def constructWeightMatrix(self, trajectories=None, as_df=False):
+        """Construct a matrix of edge weights from the list of individual trajectories."""
+        # If trajectories is None, then select all trajectories
+        if trajectories is None:
+            trajectories = self.trajectories
+        
+        # Initialize matrix with zeros
+        matrix = np.zeros((len(self.unique_points), len(self.unique_points)))
 
-# Get trajectories
-t = Trajectory(r"algorithm_repository\Flow-Maps\trajectories.txt")
-print(t.countTrajectories(relative=True))
+        # Make dataframe to easily add weights
+        df_matrix = pd.DataFrame(matrix, columns=self.unique_points, index=self.unique_points)
+
+        # Add 1 for each existing double in trajectory
+        for trajectory in trajectories:
+            for i in range(len(trajectory)-1):
+                m, n = trajectory[i:i+2]
+                df_matrix.loc[m, n] += 1
+        
+        if as_df:
+            return df_matrix
+        return df_matrix.to_numpy()
