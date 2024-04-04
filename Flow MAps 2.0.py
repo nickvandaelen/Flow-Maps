@@ -6,7 +6,7 @@ from matplotlib import cm
 
 def draw_weighted_graph(nodes, edges):
     # Create a graph
-    G = nx.Graph()
+    G = nx.DiGraph()
 
     # Add nodes to the graph
     for node in nodes:
@@ -14,7 +14,7 @@ def draw_weighted_graph(nodes, edges):
 
     # Add edges to the graph with weights
     for i in range(len(nodes)):
-        for j in range(i + 1, len(nodes)):
+        for j in range(len(nodes)):
             weight = edges[i][j]
             if weight != 0:
                 G.add_edge(nodes[i], nodes[j], weight=weight)
@@ -30,7 +30,17 @@ def draw_weighted_graph(nodes, edges):
     cmap = cm.get_cmap('viridis')
 
     # Specify positions of the nodes
-    pos = {'A': (-3, 1), 'B': (-2, -2), 'C': (0.5, 0), 'D': (0, -1), 'E': (2, 1), 'F': (3, -2)}
+    pos = {'A': (-3, 1), 'B': (-2, -2), 'C': (0.5, 0), 'D': (0, -1), 'E': (2, 1), 'F': (3, -2), 'J':(-0.75, -1.5)}
+
+    # Extract x-values from the points
+    x_values = [point[0] for point in pos.values()]
+
+    # Set the x-limits of the plot
+    plt.xlim(min(x_values) - 1, max(x_values) + 1)
+    
+    #linewidth Scaling Factor
+    #fact needs to be 600/width of graph
+    fact = 600/(max(x_values) - min(x_values))
 
     # Draw edges with custom routing and color
     running_in_width = {node: 0 for node in nodes}
@@ -42,8 +52,7 @@ def draw_weighted_graph(nodes, edges):
         x1, y1 = pos[node1]
         x2, y2 = pos[node2]
         seg = 0.5
-        #fact needs to be 600/width of graph
-        fact = 90
+
         control_point = (x1 + seg, y1 + out_edge_weights[node1]/fact-running_out_width[node1]/(fact/2)-weight/fact)
         control_point_2 = (x2 - seg, y2 + in_edge_weights[node2]/fact-running_in_width[node2]/(fact/2)-weight/fact) # Control point for the Bezier curve
 
@@ -63,7 +72,7 @@ def draw_weighted_graph(nodes, edges):
         running_out_width[node1] += weight
         running_in_width[node2] += weight
         
-        print(running_in_width)
+        print(edge)
     # Customize node shapes and sizes
     node_patches = [patches.Circle((0, 0), max(out_edge_weights[node], in_edge_weights[node])/50, edgecolor='black', facecolor='black') for node in nodes]
 
@@ -79,7 +88,34 @@ def draw_weighted_graph(nodes, edges):
     plt.show()
 
 # Example usage:
-nodes = ['A', 'B', 'C', 'D', 'E', 'F']
-edges = np.array([[0, 0, 2, 5, 0, 0], [0, 0, 1, 2, 1, 0], [0, 0, 0, 0, 8, 3], [0, 0, 0, 0, 2, 4], [0,0,0,0,0,0], [0,0,0,0,0,0]])  # Example adjacency matrix
+nodes = ['A', 'B', 'C', 'D', 'E', 'F', 'J']
+edges = np.array([[0, 0, 2, 5, 0, 0, 0], 
+                  [0, 0, 1, 2, 1, 0, 5], 
+                  [0, 0, 0, 0, 8, 3, 0], 
+                  [0, 0, 0, 0, 2, 4, 0], 
+                  [0, 0, 0, 0, 0, 0, 0], 
+                  [0, 0, 0, 0, 0, 0, 0], 
+                  [0, 0, 0, 0, 3, 2, 0]])  # Example adjacency matrix
 
+'''
+#test if nodes are different order
+nodes = ['A', 'C', 'B',  'D', 'E', 'F', 'J']
+edges = np.array([[0, 2, 0, 5, 0, 0], [0, 0, 0, 0, 8, 3], [0, 0, 1, 2, 1, 0],  [0, 0, 0, 0, 2, 4], [0,0,0,0,0,0], [0,0,0,0,0,0]])  # Example adjacency matrix
+
+    # Create a graph
+G = nx.Graph()
+
+    # Add nodes to the graph
+for node in nodes:
+    G.add_node(node)
+
+    # Add edges to the graph with weights
+for i in range(len(nodes)):
+    for j in range(i + 1, len(nodes)):
+        weight = edges[i][j]
+        if weight != 0:
+            G.add_edge(nodes[i], nodes[j], weight=weight)
+for edge in G.edges():
+    print(edge)
+'''
 draw_weighted_graph(nodes, edges)
