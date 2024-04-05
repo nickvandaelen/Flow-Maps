@@ -5,7 +5,7 @@ import matplotlib.patches as patches
 from matplotlib import cm
 from trajectory import *
 
-def draw_weighted_graph(nodes, edges):
+def draw_weighted_graph(nodes, edges, positions):
     # Create a graph
     G = nx.DiGraph()
 
@@ -32,17 +32,32 @@ def draw_weighted_graph(nodes, edges):
 
     # Specify positions of the nodes
     # pos = {'A': (-3, 1), 'B': (-2, -2), 'C': (0.5, 0), 'D': (0, -1), 'E': (2, 1), 'F': (3, -2), 'J':(-0.75, -1.5)}
-    pos = read_from_json(r"algorithm_repository\Flow-Maps\city_coordinates.json")
+    # pos = read_from_json(r"algorithm_repository\Flow-Maps\city_coordinates.json")
+    pos = positions
 
     # Extract x-values from the points
     x_values = [point[0] for point in pos.values()]
 
+    # Extract y-values from the points
+    y_values = [point[1] for point in getDictValues(pos)]
+
+    # Normalize
+    x_values_norm = min_max_scaling(x_values, -5, 5)
+    y_values_norm = min_max_scaling(y_values, -5, 5)
+    pos_norm = dict()
+    for i in range(len(x_values)):
+        pos_norm[getDictKeys(pos)[i]] = (x_values_norm[i], y_values_norm[i])
+    pos = pos_norm
+
     # Set the x-limits of the plot
-    plt.xlim(min(x_values) - 1, max(x_values) + 1)
+    plt.xlim(min(x_values_norm) - 1, max(x_values_norm) + 1)
+
+    # Set the y-limits of the plot
+    plt.ylim(min(y_values_norm) - 1, max(y_values_norm) + 1)
     
     #linewidth Scaling Factor
     #fact needs to be 600/width of graph
-    fact = 600/(max(x_values) - min(x_values))
+    fact = 600/(max(x_values_norm) - min(x_values_norm))
 
     # Draw edges with custom routing and color
     running_in_width = {node: 0 for node in nodes}
@@ -53,7 +68,7 @@ def draw_weighted_graph(nodes, edges):
         weight = G.edges[edge]['weight']  # Get the weight of the current edge
         x1, y1 = pos[node1]
         x2, y2 = pos[node2]
-        seg = 0.5
+        seg = abs(x1 - x2)/5
 
         control_point = (x1 + seg, y1 + out_edge_weights[node1]/fact-running_out_width[node1]/(fact/2)-weight/fact)
         control_point_2 = (x2 - seg, y2 + in_edge_weights[node2]/fact-running_in_width[node2]/(fact/2)-weight/fact) # Control point for the Bezier curve
@@ -100,6 +115,7 @@ def draw_weighted_graph(nodes, edges):
 #                   [0, 0, 0, 0, 3, 2, 0]])  # Example adjacency matrix
 # Get trajectories
 t = Trajectory(r"algorithm_repository\Flow-Maps\trajectories.txt")
+pos = read_from_json(r"algorithm_repository\Flow-Maps\city_coordinates.json")
 nodes = t.unique_points
 trajectories = t.filterOnStartAndEndPoints(['I'], ['G'])
 edges = t.constructWeightMatrix(trajectories)
@@ -126,4 +142,4 @@ for i in range(len(nodes)):
 for edge in G.edges():
     print(edge)
 '''
-draw_weighted_graph(nodes, edges)
+draw_weighted_graph(nodes, edges, pos)

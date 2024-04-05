@@ -36,6 +36,30 @@ def read_from_json(filename):
         data = json.load(json_file)
     return data
 
+def min_max_scaling(data, min_val=0, max_val=1):
+    """
+    Perform min-max scaling on the given data, scaling it to a custom range.
+    
+    Args:
+        data: A NumPy array or list containing the data to be scaled.
+        min_val: The minimum value of the custom range (default is 0).
+        max_val: The maximum value of the custom range (default is 1).
+        
+    Returns:
+        Scaled data.
+    """
+    # Convert data to NumPy array if it's not already
+    data = np.array(data)
+    
+    # Calculate the minimum and maximum values for each feature
+    min_vals = np.min(data, axis=0)
+    max_vals = np.max(data, axis=0)
+    
+    # Perform min-max scaling to the custom range
+    scaled_data = min_val + (data - min_vals) * (max_val - min_val) / (max_vals - min_vals)
+    
+    return scaled_data
+
 
 #### Quick Sort Function ####
 # Function to find the partition position
