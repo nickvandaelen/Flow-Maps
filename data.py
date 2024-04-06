@@ -7,11 +7,16 @@ import seaborn as sns
 # Generate 10 cities -- call them A, ..., J
 cities = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
 hubs = ['B', 'F', 'I']
-colors = ['blue' if city in hubs else 'red' for city in cities]
-markers = ['*' if city in hubs else 'o' for city in cities]
-sizes = [350 if city in hubs else 150 for city in cities]
-text_sizes = [15 if city in hubs else 10 for city in cities]
-labels = ['hub' if city in hubs else 'town' for city in cities]
+# colors = ['blue' if city in hubs else 'red' for city in cities]
+colors = ['red' for city in cities]
+# markers = ['*' if city in hubs else 'o' for city in cities]
+markers = ['*' for city in cities]
+# sizes = [350 if city in hubs else 150 for city in cities]
+sizes = [350 for city in cities]
+# text_sizes = [15 if city in hubs else 10 for city in cities]
+text_sizes = [15 for city in cities]
+# labels = ['hub' if city in hubs else 'town' for city in cities]
+labels = ['town' for city in cities]
 
 np.random.seed(12)
 # Generate random x and y coordinates
@@ -150,6 +155,6 @@ for i, (x, y) in enumerate(zip(X, Y)):
     axes.text(x+1.25, y+1.25, cities[i], fontsize=text_sizes[i], color='k')
 axes.grid(True, color='black', linestyle='dotted')
 # plt.tight_layout()
-if not os.path.exists(r"algorithm_repository/Flow-Maps/data_loc.pdf"):
-    plt.savefig(r"algorithm_repository/Flow-Maps/data_loc.pdf", bbox_inches="tight")
+if not os.path.exists(r"algorithm_repository/Flow-Maps/data_loc_2.pdf"):
+    plt.savefig(r"algorithm_repository/Flow-Maps/data_loc_2.pdf", bbox_inches="tight")
 plt.show()
