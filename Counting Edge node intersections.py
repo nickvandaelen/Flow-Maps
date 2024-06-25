@@ -8,20 +8,26 @@ import copy
 import itertools
 import math
 
+
 def is_point_on_segment(px, py, x1, y1, x2, y2, atol, rtol):
     """ Check if point (px, py) is on the line segment from (x1, y1) to (x2, y2) with given tolerance. """
     if min(x1, x2) <= px <= max(x1, x2) and min(y1, y2) <= py <= max(y1, y2):
         if np.isclose((px - x1) * (y2 - y1), (x2 - x1) * (py - y1), atol=atol, rtol=rtol):
-            #print(px, py)
-            #print(round(x1,1),round(y1,1),round(x2,1),round(y2,1))
             return True
     return False
 
-def check_intersection(px, py, x1, y1, x2, y2, weight, node_weight):
-    """ Check if a point intersects a line segment based on the weight of the node. """
-    atol = node_weight/2  # Example: tolerance proportional to node weight
-    rtol = weight * 1e-02  # Example: tolerance proportional to node weight
-    return is_point_on_segment(px, py, x1, y1, x2, y2, atol, rtol)
+def check_intersection(px, py, x1, y1, x2, y2, node_size, edge_width):
+    """ Check if a point intersects a line segment based on node size and edge width. """
+    atol = node_size / 100  # Tolerance based on half the node size
+    rtol = edge_width / 100  # Tolerance based on half the edge width
+    if min(x1, x2) <= px <= max(x1, x2) and min(y1, y2) <= py <= max(y1, y2):
+        if np.isclose((px - x1) * (y2 - y1), (x2 - x1) * (py - y1), atol=atol, rtol=rtol):
+            return 1.0  # Consider this as an intersection
+        elif np.isclose((px - x1) * (y2 - y1), (x2 - x1) * (py - y1), atol=atol * 2, rtol=rtol * 2):
+            return 0.5  # Close but not intersecting
+        elif np.isclose((px - x1) * (y2 - y1), (x2 - x1) * (py - y1), atol=atol * 5, rtol=rtol * 5):
+            return 0.25
+    return 0.0  # No intersection
 
 def node_spacing(pos):
     min_dist = 99999
@@ -38,8 +44,17 @@ def node_spacing(pos):
     return min_dist
             
 
-def calculate_score(intersection_count, distance_moved, order_preserved, min_dist, dim):
-    return -(intersection_count*50) - 10*distance_moved/dim - order_preserved*80 + 40*math.sqrt(min_dist)
+def calculate_score(intersection_count, distance_moved, order_preserved, min_dist, dim, print_results = False):
+    int_pen = -(intersection_count*1000)
+    dist_pen = ((-1000*distance_moved)/dim)
+    order_pen = (-order_preserved*800)
+    spacing_pen = (min_dist*100)
+    
+    combined = int_pen + dist_pen + order_pen + spacing_pen
+    if print_results:
+        print('int_pen {},{}; dist_pen {},{}; order_pen {}, {}; spacing {}, {}; total {}'.format(intersection_count, int_pen, distance_moved, dist_pen, order_preserved, order_pen, min_dist, spacing_pen, combined))
+    
+    return combined
 
 
 def check_order_preservation(pos1, pos2):
@@ -204,6 +219,8 @@ def draw_weighted_graph(nodes, edges, positions):
         x, y = pos[nodes[i]]
         patch.center = (x, y)
         plt.gca().add_patch(patch)
+        plt.gca().text(x, y, nodes[i], color='white', ha='center', va='center', fontsize=8)
+
 
     plt.axis('equal')
     plt.axis('off')
@@ -328,7 +345,7 @@ def test_weighted_graph(nodes, edges, positions):
 
 
 
-np.arange(-2, 2, 0.5)
+np.arange(-1, 1.001, 0.5)
 
 
 def move_one_algorithm(nodes, edge, pos, max_move, step):
@@ -405,7 +422,9 @@ def brute_force_algorithm(nodes, edges, pos):
     print(total_distance_moved(pos, best_positions))
     
     
+import random
     
+
     
     
 def iterative_algorithm(nodes, edges, pos, max_move, step, iterations=10):
@@ -419,7 +438,7 @@ def iterative_algorithm(nodes, edges, pos, max_move, step, iterations=10):
     
     for it in range(iterations):
         improved = False
-        for node in nodes:
+        for node in random.sample(nodes, len(nodes)):
             local_best_score = -float('inf')
             local_best_pos = best_positions[node]
             
@@ -432,8 +451,8 @@ def iterative_algorithm(nodes, edges, pos, max_move, step, iterations=10):
                     
                     # Calculate metrics
                     ints = test_weighted_graph(nodes, edges, new_pos)
-                    movement = total_distance_moved(best_positions, new_pos)
-                    order = check_order_preservation(best_positions, new_pos)
+                    movement = total_distance_moved(pos, new_pos)
+                    order = check_order_preservation(pos, new_pos)
                     min_dist = node_spacing(new_pos)
                     # Calculate score based on metrics
                     score = calculate_score(ints, movement, order, min_dist, dim)
@@ -447,7 +466,14 @@ def iterative_algorithm(nodes, edges, pos, max_move, step, iterations=10):
                 best_score = local_best_score
                 best_positions[node] = local_best_pos
                 improved = True
-        print('#############iter {}, score {}#############'.format(it, best_score))
+                
+        ints = test_weighted_graph(nodes, edges, best_positions)
+        movement = total_distance_moved(pos, best_positions)
+        order = check_order_preservation(pos, best_positions)
+        min_dist = node_spacing(best_positions)
+        
+        score = calculate_score(ints, movement, order, min_dist, dim, True)
+        print('#############iter {}, score {}#############'.format(it, score))
         if not improved:
             break
     
@@ -497,12 +523,15 @@ pos_small = {'A': (-3, 1), 'B': (-2, -2), 'C': (0.5, 0), 'D': (0, -1), 'E': (3, 
 
 draw_weighted_graph(nodes, edges, pos)
                
+#move_one_algorithm(nodes, edges, pos, 1, 1)                
                 
+           
                 
-                
+           
+            
 start_time = time.time()
  
-iterative_algorithm(nodes, edges, pos, 0.6, 0.2)
+iterative_algorithm(nodes, edges, pos, 0.5, 0.1)
 
 end_time = time.time()
 execution_time = end_time - start_time
