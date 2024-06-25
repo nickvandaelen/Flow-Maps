@@ -281,7 +281,7 @@ class Trajectory:
         # Filter trajectories based on start & end points
         filtered_trajectories = []
         for trajectory in self.trajectories:
-            if (trajectory[0] in startPoints) or (trajectory[-1] in endPoints):
+            if (trajectory[0] in startPoints) and (trajectory[-1] in endPoints):
                 filtered_trajectories.append(trajectory)
         return filtered_trajectories
     
