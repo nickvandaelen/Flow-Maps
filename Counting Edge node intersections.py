@@ -18,8 +18,8 @@ def is_point_on_segment(px, py, x1, y1, x2, y2, atol, rtol):
 
 def check_intersection(px, py, x1, y1, x2, y2, node_size, edge_width):
     """ Check if a point intersects a line segment based on node size and edge width. """
-    atol = node_size / 100  # Tolerance based on half the node size
-    rtol = edge_width / 100  # Tolerance based on half the edge width
+    atol = node_size / 75  # Tolerance based on half the node size
+    rtol = edge_width / 125  # Tolerance based on half the edge width
     if min(x1, x2) <= px <= max(x1, x2) and min(y1, y2) <= py <= max(y1, y2):
         if np.isclose((px - x1) * (y2 - y1), (x2 - x1) * (py - y1), atol=atol, rtol=rtol):
             return 1.0  # Consider this as an intersection
@@ -41,7 +41,7 @@ def node_spacing(pos):
             if dist < min_dist:
                 min_dist = dist
                 
-    return min_dist
+    return math.sqrt(min_dist)
             
 
 def calculate_score(intersection_count, distance_moved, order_preserved, min_dist, dim, print_results = False):
@@ -180,8 +180,8 @@ def draw_weighted_graph(nodes, edges, positions):
                 control_point = (x1 + seg, y1 + out_edge_weights[node1]/fact-running_out_width[node1]/(fact/2)-weight/fact)
                 control_point_2 = (x2 - seg, y2 + in_edge_weights[node2]/fact-running_in_width[node2]/(fact/2)-weight/fact)
 
-                color_value = (y1 - min(pos[node][1] for node in nodes)) / (max(pos[node][1] for node in nodes) - min(pos[node][1] for node in nodes))
-                color = 'red'#cmap(color_value)
+                #color_value = (y1 - min(pos[node][1] for node in nodes)) / (max(pos[node][1] for node in nodes) - min(pos[node][1] for node in nodes))
+                color = 'black'#cmap(color_value)
                 '''
                 plt.plot([x1, control_point[0]], [y1+ out_edge_weights[node1]/fact-running_out_width[node1]/(fact/2)-weight/fact, control_point[1]], color=color, linewidth=weight, alpha=min(1/weight+0.5, 1), solid_capstyle="butt")
 
@@ -190,12 +190,29 @@ def draw_weighted_graph(nodes, edges, positions):
                         px, py = pos[node]
                         intersection_count += check_intersection(px, py, x1, y1, control_point[0], control_point[1], weight, out_edge_weights)
                 '''
-                plt.plot([control_point[0], control_point_2[0]], [control_point[1], control_point_2[1]], color=color, linewidth=weight, alpha=min(1/weight+0.5, 1), solid_capstyle="round")
-
+                
+                c = 0
                 for node in nodes:
                     if node != node1 and node != node2:
                         px, py = pos[node]
-                        intersection_count += check_intersection(px, py, control_point[0], control_point[1], control_point_2[0], control_point_2[1], weight, out_edge_weights[node])
+                        check = check_intersection(px, py, control_point[0], control_point[1], control_point_2[0], control_point_2[1], weight, out_edge_weights[node])
+                        c += check
+                        intersection_count += check
+                if c == 0.25:
+                    color = 'yellow'
+                if c == 0.5:
+                    color = 'orange'
+                if c > 0.5:
+                    color = 'red'
+                    
+                    
+                    
+                plt.plot([control_point[0], control_point_2[0]], [control_point[1], control_point_2[1]], color=color, linewidth=weight, alpha=min(1/weight+0.5, 1), solid_capstyle="round")
+
+                
+            
+                    
+                
                 '''
                 plt.plot([control_point_2[0], x2], [control_point_2[1], y2+ in_edge_weights[node2]/fact-running_in_width[node2]/(fact/2)-weight/fact], color=color, linewidth=weight, alpha=min(1/weight+0.5, 1), solid_capstyle="butt")
 
@@ -531,7 +548,7 @@ draw_weighted_graph(nodes, edges, pos)
             
 start_time = time.time()
  
-iterative_algorithm(nodes, edges, pos, 0.5, 0.1)
+iterative_algorithm(nodes, edges, pos, 1, 1)
 
 end_time = time.time()
 execution_time = end_time - start_time
