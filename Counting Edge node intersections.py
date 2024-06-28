@@ -9,6 +9,9 @@ import itertools
 import math
 
 
+
+########## HELPER FUNCTIONS  #######################
+
 def is_point_on_segment(px, py, x1, y1, x2, y2, atol, rtol):
     """ Check if point (px, py) is on the line segment from (x1, y1) to (x2, y2) with given tolerance. """
     if min(x1, x2) <= px <= max(x1, x2) and min(y1, y2) <= py <= max(y1, y2):
@@ -16,10 +19,11 @@ def is_point_on_segment(px, py, x1, y1, x2, y2, atol, rtol):
             return True
     return False
 
-def check_intersection(px, py, x1, y1, x2, y2, node_size, edge_width):
+def check_intersection(px, py, x1, y1, x2, y2, node_size, edge_width, dim):
     """ Check if a point intersects a line segment based on node size and edge width. """
     atol = node_size / 75  # Tolerance based on half the node size
     rtol = edge_width / 125  # Tolerance based on half the edge width
+    #py = py+(0.015*dim)
     if min(x1, x2) <= px <= max(x1, x2) and min(y1, y2) <= py <= max(y1, y2):
         if np.isclose((px - x1) * (y2 - y1), (x2 - x1) * (py - y1), atol=atol, rtol=rtol):
             return 1.0  # Consider this as an intersection
@@ -48,7 +52,7 @@ def calculate_score(intersection_count, distance_moved, order_preserved, min_dis
     int_pen = -(intersection_count*1000)
     dist_pen = ((-1000*distance_moved)/dim)
     order_pen = (-order_preserved*800)
-    spacing_pen = (min_dist*100)
+    spacing_pen = (min_dist*400)
     
     combined = int_pen + dist_pen + order_pen + spacing_pen
     if print_results:
@@ -69,10 +73,14 @@ def check_order_preservation(pos1, pos2):
             # Check horizontal order in true_pos
             if (pos1[key_i][0] - pos1[key_j][0]) * (pos2[key_i][0] - pos2[key_j][0]) < 0:
                 switches += 1
+            elif abs(pos2[key_i][0] - pos2[key_j][0]) < abs(pos1[key_i][0] - pos1[key_j][0])/3:
+                switches +=0.15
                 
             # Check vertical order in true_pos
             if (pos1[key_i][1] - pos1[key_j][1]) * (pos2[key_i][1] - pos2[key_j][1]) < 0:
                 switches += 1
+            elif abs(pos2[key_i][1] - pos2[key_j][1]) < abs(pos1[key_i][1] - pos1[key_j][1])/3:
+                switches +=0.15
         
     return switches
     
@@ -195,7 +203,7 @@ def draw_weighted_graph(nodes, edges, positions):
                 for node in nodes:
                     if node != node1 and node != node2:
                         px, py = pos[node]
-                        check = check_intersection(px, py, control_point[0], control_point[1], control_point_2[0], control_point_2[1], weight, out_edge_weights[node])
+                        check = check_intersection(px, py, control_point[0], control_point[1], control_point_2[0], control_point_2[1], weight, out_edge_weights[node], dim)
                         c += check
                         intersection_count += check
                 if c == 0.25:
@@ -298,10 +306,9 @@ def test_weighted_graph(nodes, edges, positions):
         out_edge_weights[node] = sum(G.edges[edge]['weight'] for edge in G.edges() if edge[0] == node)
         in_edge_weights[node] = sum(G.edges[edge]['weight'] for edge in G.edges() if edge[1] == node)
 
-    cmap = cm.get_cmap('viridis')
 
     x_values = [point[0] for point in pos.values()]
-    plt.xlim(min(x_values) - 1, max(x_values) + 1)
+    #plt.xlim(min(x_values) - 1, max(x_values) + 1)
     
     dim = max(x_values) - min(x_values)
     
@@ -328,30 +335,14 @@ def test_weighted_graph(nodes, edges, positions):
                 control_point = (x1 + seg, y1 + out_edge_weights[node1]/fact-running_out_width[node1]/(fact/2)-weight/fact)
                 control_point_2 = (x2 - seg, y2 + in_edge_weights[node2]/fact-running_in_width[node2]/(fact/2)-weight/fact)
 
-                color_value = (y1 - min(pos[node][1] for node in nodes)) / (max(pos[node][1] for node in nodes) - min(pos[node][1] for node in nodes))
-                color = cmap(color_value)
-                '''
-                plt.plot([x1, control_point[0]], [y1+ out_edge_weights[node1]/fact-running_out_width[node1]/(fact/2)-weight/fact, control_point[1]], color=color, linewidth=weight, alpha=min(1/weight+0.5, 1), solid_capstyle="butt")
 
-                for node in nodes:
-                    if node != node1 and node != node2:
-                        px, py = pos[node]
-                        intersection_count += check_intersection(px, py, x1, y1, control_point[0], control_point[1], weight, out_edge_weights)
-                '''
                 #plt.plot([control_point[0], control_point_2[0]], [control_point[1], control_point_2[1]], color=color, linewidth=weight, alpha=min(1/weight+0.5, 1), solid_capstyle="round")
 
                 for node in nodes:
                     if node != node1 and node != node2:
                         px, py = pos[node]
-                        intersection_count += check_intersection(px, py, control_point[0], control_point[1], control_point_2[0], control_point_2[1], weight, out_edge_weights[node])
-                '''
-                plt.plot([control_point_2[0], x2], [control_point_2[1], y2+ in_edge_weights[node2]/fact-running_in_width[node2]/(fact/2)-weight/fact], color=color, linewidth=weight, alpha=min(1/weight+0.5, 1), solid_capstyle="butt")
+                        intersection_count += check_intersection(px, py, control_point[0], control_point[1], control_point_2[0], control_point_2[1], weight, out_edge_weights[node], dim)
 
-                for node in nodes:
-                    if node != node1 and node != node2:
-                        px, py = pos[node]
-                        intersection_count += check_intersection(px, py, control_point_2[0], control_point_2[1], x2, y2, weight, out_edge_weights)
-                '''
                 running_out_width[node1] += weight
                 running_in_width[node2] += weight
 
@@ -361,9 +352,7 @@ def test_weighted_graph(nodes, edges, positions):
     return intersection_count
 
 
-
-np.arange(-1, 1.001, 0.5)
-
+#################### ALGORITHMS   ############################
 
 def move_one_algorithm(nodes, edge, pos, max_move, step):
     max_score = -999999
@@ -438,10 +427,81 @@ def brute_force_algorithm(nodes, edges, pos):
     print(check_order_preservation(pos, best_positions))
     print(total_distance_moved(pos, best_positions))
     
+   
+    
+   
+    
+   
+    
+   
+    
+   
     
 import random
     
+def single_pass_algorithm(nodes, edges, pos, max_move, step):
+    best_positions = copy.deepcopy(pos)
+    best_score = -float('inf')
+    
+    moves = np.arange(-max_move, (max_move + .001), step)
+    
+    x_values = [point[0] for point in pos.values()]
+    dim = max(x_values) - min(x_values)
+    
+    improved = False
+    
+    for node in nodes:
+        local_best_score = -float('inf')
+        local_best_pos = best_positions[node]
+        
+        for x in moves:
+            for y in moves:
+                if x == 0 and y == 0:
+                    continue
+                new_pos = copy.deepcopy(best_positions)
+                new_pos[node] = (best_positions[node][0] + x, best_positions[node][1] + y)
+                
+                # Calculate metrics
+                ints = test_weighted_graph(nodes, edges, new_pos)
+                movement = total_distance_moved(pos, new_pos)
+                order = check_order_preservation(pos, new_pos)
+                min_dist = node_spacing(new_pos)
+                
+                # Calculate score based on metrics
+                score = calculate_score(ints, movement, order, min_dist, dim)
+                
+                if score > local_best_score:
+                    local_best_score = score
+                    local_best_pos = new_pos[node]
+        
+        # Update the position if it improved
+        if local_best_score > best_score:
+            best_score = local_best_score
+            best_positions[node] = local_best_pos
+            improved = True
 
+    ints = test_weighted_graph(nodes, edges, best_positions)
+    movement = total_distance_moved(pos, best_positions)
+    order = check_order_preservation(pos, best_positions)
+    min_dist = node_spacing(best_positions)
+    
+    score = calculate_score(ints, movement, order, min_dist, dim, True)
+    print('############# Final score {} #############'.format(score))
+    
+    print("Best positions after single pass algorithm:", best_positions)
+    print("Best score:", best_score)
+    
+    draw_weighted_graph(nodes, edges, best_positions)
+    print('Order changed: {}'.format(check_order_preservation(pos, best_positions)))
+    print('Distance Moved: {}'.format(total_distance_moved(pos, best_positions)))
+    print('closest nodes {}'.format(node_spacing(best_positions)))
+    
+    
+    
+    
+    
+    
+    
     
     
 def iterative_algorithm(nodes, edges, pos, max_move, step, iterations=10):
@@ -454,7 +514,7 @@ def iterative_algorithm(nodes, edges, pos, max_move, step, iterations=10):
     dim = max(x_values) - min(x_values)
     
     for it in range(iterations):
-        improved = False
+        improved = 0
         for node in random.sample(nodes, len(nodes)):
             local_best_score = -float('inf')
             local_best_pos = best_positions[node]
@@ -480,9 +540,10 @@ def iterative_algorithm(nodes, edges, pos, max_move, step, iterations=10):
             
             # Update the position if it improved
             if local_best_score > best_score:
+                improved = local_best_score - best_score
                 best_score = local_best_score
                 best_positions[node] = local_best_pos
-                improved = True
+                
                 
         ints = test_weighted_graph(nodes, edges, best_positions)
         movement = total_distance_moved(pos, best_positions)
@@ -491,7 +552,7 @@ def iterative_algorithm(nodes, edges, pos, max_move, step, iterations=10):
         
         score = calculate_score(ints, movement, order, min_dist, dim, True)
         print('#############iter {}, score {}#############'.format(it, score))
-        if not improved:
+        if  improved < 1:
             break
     
     print("Best positions after hybrid algorithm:", best_positions)
@@ -504,6 +565,84 @@ def iterative_algorithm(nodes, edges, pos, max_move, step, iterations=10):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import random
+import math
+
+def simulated_annealing(nodes, edges, pos, max_move, step, initial_temp, cooling_rate, iterations=1000):
+    current_positions = copy.deepcopy(pos)
+    current_score = calculate_score(*evaluate_positions(nodes, edges, current_positions), dim=max(pos.values())[0])
+    best_positions = copy.deepcopy(current_positions)
+    best_score = current_score
+    
+    temp = initial_temp
+    
+    for it in range(iterations):
+        node = random.choice(nodes)
+        move_x = random.uniform(-max_move, max_move)
+        move_y = random.uniform(-max_move, max_move)
+        new_positions = copy.deepcopy(current_positions)
+        new_positions[node] = (current_positions[node][0] + move_x, current_positions[node][1] + move_y)
+        
+        new_score = calculate_score(*evaluate_positions(nodes, edges, new_positions), dim=max(pos.values())[0])
+        
+        if new_score > current_score or math.exp((new_score - current_score) / temp) > random.random():
+            current_positions = new_positions
+            current_score = new_score
+            
+            if new_score > best_score:
+                best_positions = new_positions
+                best_score = new_score
+        
+        temp *= cooling_rate
+        
+    print("Best score:", best_score)
+     
+    draw_weighted_graph(nodes, edges, best_positions)
+    print('Order changed: {}'.format(check_order_preservation(pos, best_positions)))
+    print('Distance Moved: {}'.format(total_distance_moved(pos, best_positions)))
+    print('closest nodes {}'.format(node_spacing(best_positions)))
+
+def evaluate_positions(nodes, edges, positions):
+    ints = test_weighted_graph(nodes, edges, positions)
+    movement = total_distance_moved(pos, positions)
+    order = check_order_preservation(pos, positions)
+    min_dist = node_spacing(positions)
+    return ints, movement, order, min_dist
+
+
 start_time = time.time()
 
 nodes = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']
@@ -512,7 +651,7 @@ pos = {'A': (-6, 1), 'B': (-5, -1), 'C': (-4, 2), 'D': (-3, -2), 'E': (-2, 0), '
 
 # Define the adjacency matrix for the edges
 edges = np.array([
-    [0, 5, 2, 5, 0, 0, 0, 3, 0, 0, 0, 4], 
+    [0, 5, 2, 5, 0, 0, 0, 3, 0, 0, 0, 0], 
     [0, 0, 1, 2, 1, 0, 0, 0, 0, 5, 0, 1], 
     [0, 0, 0, 0, 8, 3, 0, 0, 0, 0, 0, 0], 
     [0, 0, 0, 0, 2, 4, 0, 0, 1, 0, 0, 0], 
@@ -538,21 +677,48 @@ edges_small = np.array([[0, 5, 2, 5, 0, 0, 0],
 pos_small = {'A': (-3, 1), 'B': (-2, -2), 'C': (0.5, 0), 'D': (0, -1), 'E': (3, 1), 'F': (3.5, -2), 'J':(-0.75, -1.5)}
 
 
+
+
+
+
+
+
+
+
+################# TESTING AREA ################################
+
+
+
 draw_weighted_graph(nodes, edges, pos)
                
 #move_one_algorithm(nodes, edges, pos, 1, 1)                
                 
            
-                
-           
+               
+## Make sure max_move and step_size (last 2 parameters) are reasonable relative to the scale of the coordinates in the data           
             
 start_time = time.time()
  
-iterative_algorithm(nodes, edges, pos, 1, 1)
-
+iterative_algorithm(nodes, edges, pos, 0.5, 0.25)
 end_time = time.time()
 execution_time = end_time - start_time
 print(f"Execution time: {execution_time} seconds") 
+
+
+
+
+start_time = time.time()
+single_pass_algorithm(nodes, edges, pos, max_move=0.5, step=0.25)
+end_time = time.time()
+execution_time = end_time - start_time
+print(f"Execution time: {execution_time} seconds") 
+
+
+
+
+
+
+
 
 # Example usage:
 nodes_smaller = ['A', 'B', 'C', 'D']
