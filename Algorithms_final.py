@@ -1,6 +1,5 @@
 import numpy as np
 import networkx as nx
-import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib import cm
@@ -30,7 +29,7 @@ def check_intersection(px, py, x1, y1, x2, y2, node_size, edge_width, dim):
             return 1.0  # Consider this as an intersection
         elif np.isclose((px - x1) * (y2 - y1), (x2 - x1) * (py - y1), atol=atol * 2, rtol=rtol * 2):
             return 0.5  # Close but not intersecting
-        elif np.isclose((px - x1) * (y2 - y1), (x2 - x1) * (py - y1), atol=atol * 5, rtol=rtol * 5):
+        elif np.isclose((px - x1) * (y2 - y1), (x2 - x1) * (py - y1), atol=atol * 4, rtol=rtol * 4):
             return 0.25
     return 0.0  # No intersection
 
@@ -50,10 +49,10 @@ def node_spacing(pos):
             
 
 def calculate_score(intersection_count, distance_moved, order_preserved, min_dist, dim, print_results = False):
-    int_pen = -(intersection_count*1000)
-    dist_pen = ((-1000*distance_moved)/dim)
-    order_pen = (-order_preserved*800)
-    spacing_pen = (min_dist*400)
+    int_pen = -(intersection_count*10)
+    dist_pen = ((-10*distance_moved)/dim)
+    order_pen = (-order_preserved*8)
+    spacing_pen = (min_dist*4)
     
     combined = int_pen + dist_pen + order_pen + spacing_pen
     if print_results:
@@ -80,7 +79,7 @@ def check_order_preservation(pos1, pos2):
             # Check vertical order in true_pos
             if (pos1[key_i][1] - pos1[key_j][1]) * (pos2[key_i][1] - pos2[key_j][1]) < 0:
                 switches += 1
-            elif abs(pos2[key_i][1] - pos2[key_j][1]) < abs(pos1[key_i][1] - pos1[key_j][1])/3:
+            elif abs(pos2[key_i][1] - pos2[key_j][1]) < abs(pos1[key_i][1] - pos1[key_j][1])/5:
                 switches +=0.15
         
     return switches
@@ -159,8 +158,7 @@ def draw_weighted_graph(nodes, edges, positions):
         out_edge_weights[node] = sum(G.edges[edge]['weight'] for edge in G.edges() if edge[0] == node)
         in_edge_weights[node] = sum(G.edges[edge]['weight'] for edge in G.edges() if edge[1] == node)
 
-    # cmap = cm.get_cmap('viridis')
-    cmap = plt.cm.viridis
+    cmap = cm.get_cmap('viridis')
 
     x_values = [point[0] for point in pos.values()]
     plt.xlim(min(x_values) - 1, max(x_values) + 1)
@@ -489,15 +487,15 @@ def single_pass_algorithm(nodes, edges, pos, max_move, step):
     min_dist = node_spacing(best_positions)
     
     score = calculate_score(ints, movement, order, min_dist, dim, True)
-    print('############# Final score {} #############'.format(score))
+    #print('############# Final score {} #############'.format(score))
     
-    print("Best positions after single pass algorithm:", best_positions)
-    print("Best score:", best_score)
+    #print("Best positions after single pass algorithm:", best_positions)
+    #print("Best score:", best_score)
     
     int_count = draw_weighted_graph(nodes, edges, best_positions)
-    print('Order changed: {}'.format(check_order_preservation(pos, best_positions)))
-    print('Distance Moved: {}'.format(total_distance_moved(pos, best_positions)))
-    print('closest nodes {}'.format(node_spacing(best_positions)))
+    #print('Order changed: {}'.format(check_order_preservation(pos, best_positions)))
+    #print('Distance Moved: {}'.format(total_distance_moved(pos, best_positions)))
+    #print('closest nodes {}'.format(node_spacing(best_positions)))
     order_pres = check_order_preservation(pos, best_positions)
     total_dist = total_distance_moved(pos, best_positions)
     space = node_spacing(best_positions)
@@ -521,7 +519,7 @@ def iterative_algorithm(nodes, edges, pos, max_move, step, iterations=10):
     
     for it in range(iterations):
         improved = 0
-        for node in random.sample(nodes, len(nodes)):
+        for node in nodes:
             local_best_score = -float('inf')
             local_best_pos = best_positions[node]
             
@@ -750,16 +748,20 @@ pos_smaller = {'A': (-3, 1), 'B': (-2, -2), 'C': (0.5, 0), 'D':(-0.8,-1)}
 import pandas as pd
 #################### Test Multiple Trials ######################3
 num_trials = 10
+step_sizes = [0.5,0.25,0.1666666, 0.125]
 intersections = []
 distances = []
 orders = []
 spacings = []
 times = []
 scores = []
-for j in range(num_trials):
+for j in step_sizes:
+    print('Iteration: {}'.format(j))
     start_time = time.time()
-     
-    i,d,o,s,sc = iterative_algorithm(nodes, edges, pos, 0.5, 0.125)
+    
+    i,d,o,s,sc = single_pass_algorithm(nodes, edges, pos, 0.5, j)
+    #i,d,o,s,sc = iterative_algorithm(nodes, edges, pos, 0.5, j)
+    
     end_time = time.time()
     execution_time = end_time - start_time    
     intersections.append(i)
@@ -777,6 +779,7 @@ print(times)
 print(scores)
 
 data = {
+    'Step Size': step_sizes,
     'Intersections': intersections,
     'Distances': distances,
     'Orders': orders,
@@ -789,7 +792,7 @@ df = pd.DataFrame(data)
 
 # Displaying the DataFrame
 print(df)
-print(df.mean())
+#print(df.mean())
 
 
 
