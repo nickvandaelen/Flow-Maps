@@ -250,6 +250,7 @@ def draw_weighted_graph(nodes, edges, positions):
     plt.axis('equal')
     plt.axis('off')
     plt.show()
+    return intersection_count
 
 
 
@@ -491,11 +492,14 @@ def single_pass_algorithm(nodes, edges, pos, max_move, step):
     print("Best positions after single pass algorithm:", best_positions)
     print("Best score:", best_score)
     
-    draw_weighted_graph(nodes, edges, best_positions)
+    int_count = draw_weighted_graph(nodes, edges, best_positions)
     print('Order changed: {}'.format(check_order_preservation(pos, best_positions)))
     print('Distance Moved: {}'.format(total_distance_moved(pos, best_positions)))
     print('closest nodes {}'.format(node_spacing(best_positions)))
-    
+    order_pres = check_order_preservation(pos, best_positions)
+    total_dist = total_distance_moved(pos, best_positions)
+    space = node_spacing(best_positions)
+    return int_count, total_dist, order_pres, space, score
     
     
     
@@ -558,10 +562,14 @@ def iterative_algorithm(nodes, edges, pos, max_move, step, iterations=10):
     print("Best positions after hybrid algorithm:", best_positions)
     print("Best score:", best_score)
     
-    draw_weighted_graph(nodes, edges, best_positions)
+    int_count = draw_weighted_graph(nodes, edges, best_positions)
     print('Order changed: {}'.format(check_order_preservation(pos, best_positions)))
     print('Distance Moved: {}'.format(total_distance_moved(pos, best_positions)))
     print('closest nodes {}'.format(node_spacing(best_positions)))
+    order_pres = check_order_preservation(pos, best_positions)
+    total_dist = total_distance_moved(pos, best_positions)
+    space = node_spacing(best_positions)
+    return int_count, total_dist, order_pres, space, score
 
 
 
@@ -680,7 +688,7 @@ pos_small = {'A': (-3, 1), 'B': (-2, -2), 'C': (0.5, 0), 'D': (0, -1), 'E': (3, 
 
 
 
-
+'''
 
 
 
@@ -727,4 +735,60 @@ edges_smaller = np.array([[0, 5, 2, 5],
                   [0, 0, 0,3],
                   [0,0,0,0]])
 pos_smaller = {'A': (-3, 1), 'B': (-2, -2), 'C': (0.5, 0), 'D':(-0.8,-1)}
+
+
+
+'''
+
+
+
+
+
+
+import pandas as pd
+#################### Test Multiple Trials ######################3
+num_trials = 10
+intersections = []
+distances = []
+orders = []
+spacings = []
+times = []
+scores = []
+for j in range(num_trials):
+    start_time = time.time()
+     
+    i,d,o,s,sc = iterative_algorithm(nodes, edges, pos, 0.5, 0.125)
+    end_time = time.time()
+    execution_time = end_time - start_time    
+    intersections.append(i)
+    distances.append(d)
+    orders.append(o)
+    spacings.append(s)
+    times.append(execution_time)
+    scores.append(sc)
+
+print(intersections)
+print(distances)
+print(orders)
+print(spacings)
+print(times)
+print(scores)
+
+data = {
+    'Intersections': intersections,
+    'Distances': distances,
+    'Orders': orders,
+    'Spacings': spacings,
+    'Times': times,
+    'Scores': scores
+}
+
+df = pd.DataFrame(data)
+
+# Displaying the DataFrame
+print(df)
+print(df.mean())
+
+
+
 
