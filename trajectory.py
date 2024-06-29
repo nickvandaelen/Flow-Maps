@@ -5,6 +5,7 @@ from functools import reduce
 from copy import deepcopy
 import os
 import json
+from tqdm import tqdm
 
 getDictKeys = lambda dict_: list(dict_.keys())
 getDictValues = lambda dict_: list(dict_.values())
@@ -325,11 +326,13 @@ class Trajectory:
         df_matrix = pd.DataFrame(matrix, columns=self.unique_points, index=self.unique_points)
 
         # Add 1 for each existing double in trajectory
-        for trajectory in trajectories:
+        print("Constructing weight matrix ...")
+        for trajectory in tqdm(trajectories):
             for i in range(len(trajectory)-1):
                 m, n = trajectory[i:i+2]
                 df_matrix.loc[m, n] += 1
         
         if as_df:
             return df_matrix
+        print("Done!")
         return df_matrix.to_numpy()
