@@ -1,5 +1,6 @@
 import numpy as np
 import networkx as nx
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib import cm
@@ -158,7 +159,8 @@ def draw_weighted_graph(nodes, edges, positions):
         out_edge_weights[node] = sum(G.edges[edge]['weight'] for edge in G.edges() if edge[0] == node)
         in_edge_weights[node] = sum(G.edges[edge]['weight'] for edge in G.edges() if edge[1] == node)
 
-    cmap = cm.get_cmap('viridis')
+    # cmap = cm.get_cmap('viridis')
+    cmap = plt.cm.viridis
 
     x_values = [point[0] for point in pos.values()]
     plt.xlim(min(x_values) - 1, max(x_values) + 1)
