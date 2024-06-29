@@ -748,17 +748,20 @@ pos_smaller = {'A': (-3, 1), 'B': (-2, -2), 'C': (0.5, 0), 'D':(-0.8,-1)}
 import pandas as pd
 #################### Test Multiple Trials ######################3
 num_trials = 10
+step_sizes = [0.5,0.25,0.1666666, 0.125]
 intersections = []
 distances = []
 orders = []
 spacings = []
 times = []
 scores = []
-for j in range(num_trials):
+for j in step_sizes:
     print('Iteration: {}'.format(j))
     start_time = time.time()
-     
-    i,d,o,s,sc = iterative_algorithm(nodes, edges, pos, 0.5, 0.125)
+    
+    i,d,o,s,sc = single_pass_algorithm(nodes, edges, pos, 0.5, j)
+    #i,d,o,s,sc = iterative_algorithm(nodes, edges, pos, 0.5, j)
+    
     end_time = time.time()
     execution_time = end_time - start_time    
     intersections.append(i)
@@ -776,6 +779,7 @@ print(times)
 print(scores)
 
 data = {
+    'Step Size': step_sizes,
     'Intersections': intersections,
     'Distances': distances,
     'Orders': orders,
@@ -788,7 +792,7 @@ df = pd.DataFrame(data)
 
 # Displaying the DataFrame
 print(df)
-print(df.mean())
+#print(df.mean())
 
 
 
