@@ -607,9 +607,11 @@ min_edge, max_edge = np.min(edges), np.max(edges)
 
 # Perform min-max scaling to the custom range
 edges = (edges / max_value) * 2.5
-
+print(edges)
+print(nodes)
+print(pos)
 
 
 
 draw_weighted_graph(nodes, edges, pos, title="Trajectories from Seattle/Los Angeles", 
-                    save_path=r"from_sea_lax_trajectories.pdf")
+                    save_path=r"")
